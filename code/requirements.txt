@@ -1,0 +1,6 @@
+pandas
+numpy
+google-api-python-client
+requests
+datetime
+pyyaml
