@@ -1,4 +1,5 @@
 # https://stackoverflow.com/questions/19965856/how-to-get-all-comments-on-a-youtube-video
+# https://stackoverflow.com/questions/70866415/how-to-install-python-specific-version-on-docker
 from googleapiclient.discovery import build
 import yaml
 
