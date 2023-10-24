@@ -1,6 +1,6 @@
 pandas
 numpy
 google-api-python-client
-requests
+#requests
 datetime
 pyyaml

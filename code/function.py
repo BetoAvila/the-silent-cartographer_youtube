@@ -14,6 +14,44 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
     ```
     YT API limits responses to 100 comments max, so in case a video has
     more, it provides a token to point to the next batch of comments.
+    YT API response is expected as follows:
+    ```
+    {
+        "nextPageToken":"11223344",
+        "items": [
+            {
+                "id": "UgxWutYSXLLPWaReIy54AaABAg",
+                "snippet": {
+                    "topLevelComment": {
+                        "snippet": {
+                            "textOriginal": "Thanks for explaining this topic in a way that a person without a data background could understand.",
+                            "authorDisplayName": "रोहन",
+                            "authorChannelUrl": "http://www.youtube.com/channel/UCTD_GM0OJuZ1OBPTeQtJbJA",
+                            "likeCount": 0,
+                            "publishedAt": "2023-10-23T06:31:01Z",
+                            "updatedAt": "2023-10-23T06:31:01Z"
+                        }
+                    }
+                }
+            },
+            {
+                "id": "UgxiHAcD6HM8CGBHFLd4AaABAg",
+                "snippet": {
+                    "topLevelComment": {
+                        "snippet": {
+                            "textOriginal": "Well explained. Easy to understand.",
+                            "authorDisplayName": "Rajat Mishra",
+                            "authorChannelUrl": "http://www.youtube.com/channel/UCCfg-aU6syh6Dp6kBZlU5Sg",
+                            "likeCount": 0,
+                            "publishedAt": "2023-10-23T03:01:14Z",
+                            "updatedAt": "2023-10-23T03:01:14Z"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+    ```
     ---
     Args:
         - `url` (str | None):
@@ -42,7 +80,10 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
                 part='snippet',
                 videoId=url,  #'uvTl6GefR9o',
                 pageToken=None,
-                maxResults=100)
+                maxResults=100,
+                fields=
+                'nextPageToken,items(id,snippet(topLevelComment(snippet(textOriginal,authorDisplayName,authorChannelUrl,likeCount,publishedAt,updatedAt))))'
+            )
             data = request.execute()
     else:  # Next 100 comments batch
         with build('youtube', 'v3', developerKey=api_key) as yt_service:
@@ -50,7 +91,10 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
                 part='snippet',
                 videoId=url,  #'uvTl6GefR9o',
                 pageToken=tkn,
-                maxResults=100)
+                maxResults=100,
+                fields=
+                'nextPageToken,items(id,snippet(topLevelComment(snippet(textOriginal,authorDisplayName,authorChannelUrl,likeCount,publishedAt,updatedAt))))'
+            )
             data = request.execute()
     tkn = data.get('nextPageToken', None)
     comments = [
@@ -61,13 +105,11 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
     if df is None:  # First 100 comments batch
         df = pd.DataFrame(comments)
         df['video_id'] = url
-        df = df[comments_cols]
     else:  # Next 100 comments batch
         x = pd.DataFrame(comments)
         x['video_id'] = url
-        x = x[comments_cols]
         df = pd.concat([df, x], ignore_index=True)
-    return 'https://www.youtube.com/watch?v=' + url, df, tkn
+    return 'https://www.youtube.com/watch?v=' + url, df[comments_cols], tkn
 
 
 def get_comments(url: str) -> pd.DataFrame:
