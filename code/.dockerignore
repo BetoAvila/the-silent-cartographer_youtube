@@ -1,0 +1,7 @@
+# Files
+.dockerignore
+.env
+*.ipynb
+
+# Folders
+/__pycache__

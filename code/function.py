@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
 import pandas as pd
-import yaml
+import os
 
 
 def get_comments_data(url: str | None, df: pd.DataFrame | None,
@@ -72,8 +73,8 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
         'authorChannelUrl', 'likeCount', 'publishedAt', 'updatedAt'
     ]
     url = url.split('=')[-1]
-    with open('./code/config.yaml', 'r') as f:
-        api_key = yaml.safe_load(f)['youtube']['API_KEY']
+    load_dotenv('.env')
+    api_key = os.getenv('YT_API_KEY')
     if tkn is None:  # First 100 comments batch
         with build('youtube', 'v3', developerKey=api_key) as yt_service:
             request = yt_service.commentThreads().list(
@@ -89,7 +90,7 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
         with build('youtube', 'v3', developerKey=api_key) as yt_service:
             request = yt_service.commentThreads().list(
                 part='snippet',
-                videoId=url,  #'uvTl6GefR9o',
+                videoId=url,  #'qJsFgPpKwE0',
                 pageToken=tkn,
                 maxResults=100,
                 fields=
@@ -140,8 +141,7 @@ def get_comments(url: str) -> pd.DataFrame:
 
 # TODO organize data pulled from method (2 tables created: videos, comments)
 # variables of video:
-
-# TODO check swarm and secrets
+# id, publishedAt, title, description, duration, viewCount, likeCount, dislikeCount
 
 # test API: https://developers.google.com/youtube/v3/docs
 # API git repo: https://github.com/googleapis/google-api-python-client/blob/main/docs/start.md
