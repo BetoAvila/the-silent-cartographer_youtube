@@ -139,9 +139,10 @@ def get_comments(url: str) -> pd.DataFrame:
     return df
 
 
-# TODO organize data pulled from method (2 tables created: videos, comments)
-# variables of video:
+# TODO create videos table, variables of video:
 # id, publishedAt, title, description, duration, viewCount, likeCount, dislikeCount
+# TODO optimize pandas dfs datatypes
+# TODO implement llama2
 
 # test API: https://developers.google.com/youtube/v3/docs
 # API git repo: https://github.com/googleapis/google-api-python-client/blob/main/docs/start.md
