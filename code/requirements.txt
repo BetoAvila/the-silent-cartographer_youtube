@@ -3,3 +3,10 @@ numpy
 google-api-python-client
 datetime
 python-dotenv
+gguf>=0.1.0
+
+# For Mac M1 processors:
+# CMAKE_ARGS="-DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir
+
+# For debian/ubuntu based systems:
+llama-cpp-python

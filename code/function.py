@@ -1,5 +1,6 @@
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+from llama_cpp import Llama
 import pandas as pd
 import os
 
@@ -113,7 +114,25 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
     return 'https://www.youtube.com/watch?v=' + url, df[comments_cols], tkn
 
 
-def get_comments(url: str) -> pd.DataFrame:
+def ai_evaluate(comment: str, lang: str) -> str:
+    llama2_model = Llama(model_path="./ggml-model-q4_0.gguf", verbose=False)
+    eng_prompt = 'Please provide a single word to evaluate the following comment. ' + \
+        'Use "Positive" for nice comments, "Negative" for mean or rude comments ' + \
+            f'or "None" when a comment does not fall on either 2 previous categories: {comment}'
+    spa_prompt = f'Evalúa el comentario con una sola palabra. ' + \
+        '"Positive" para comentarios agradables o buenos, "Negative" para comentarios desagradables o agresivos ' + \
+        f'y "Nulo" para cuando el comentario no corresponda a las opciones anteriores: {comment}'
+    if lang == 'eng': prompt = eng_prompt
+    elif lang == 'spa': prompt = spa_prompt
+    output = llama2_model.create_chat_completion(messages=[{
+        'role': 'user',
+        'content': prompt
+    }],
+                                                 max_tokens=324)
+    return output['choices'][0]['message']['content']
+
+
+def analyze_comments(url: str, lang: str) -> pd.DataFrame:
     """Wraper function to get data recursively if comments exceed 100
     and stores them in a `pd.DataFrame` with the features:
     ```
@@ -124,9 +143,11 @@ def get_comments(url: str) -> pd.DataFrame:
     
     ---
     Args:
-        - `url` (str | None):
+        - `url` (str):
             YouTube URL video with the format: 
             `https://www.youtube.com/watch?v=xxxxxxxxx`.
+        - `lang` (str):
+            Language of the YouTube video and comments to AI-evaluate.
     ---
     Returns:
         - `df` (pd.DataFrame | None):
@@ -136,13 +157,24 @@ def get_comments(url: str) -> pd.DataFrame:
     while (True):
         url, df, tkn = get_comments_data(url, df, tkn)
         if tkn is None: break
+    df.publishedAt = pd.to_datetime(df.publishedAt,
+                                    format='%Y-%m-%dT%H:%M:%SZ')
+    df.updatedAt = pd.to_datetime(df.updatedAt, format='%Y-%m-%dT%H:%M:%SZ')
+    df.rename(columns={
+        'textOriginal': 'comment',
+        'authorDisplayName': 'comment_author',
+        'authorChannelUrl': 'author_url',
+        'likeCount': 'comment_like_count',
+        'publishedAt': 'published_at',
+        'updatedAt': 'updated_at'
+    },
+              inplace=True)
+    df['AI_evaluation'] = df.comment.apply(ai_evaluate, lang=lang)
     return df
 
 
 # TODO create videos table, variables of video:
 # id, publishedAt, title, description, duration, viewCount, likeCount, dislikeCount
-# TODO optimize pandas dfs datatypes
-# TODO implement llama2
 
 # test API: https://developers.google.com/youtube/v3/docs
 # API git repo: https://github.com/googleapis/google-api-python-client/blob/main/docs/start.md
