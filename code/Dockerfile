@@ -1,15 +1,10 @@
 FROM continuumio/miniconda3
 ENV LANG=C.UTF-8
-RUN apt-get update -y && \
-    apt-get upgrade -y && \
-    apt-get install \
-    nano build-essential -y
 RUN mkdir /home/sc_yt && \
     cd /home/sc_yt
 WORKDIR /home/sc_yt
 COPY . .
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
-RUN conda install pytorch -c pytorch -y
 RUN --mount=type=secret,id=yt_api_key \
     cat /run/secrets/yt_api_key >> /home/sc_yt/.env
+RUN chmod +x startup.sh 
+RUN ./startup.sh
