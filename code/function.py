@@ -115,7 +115,9 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
 
 
 def ai_evaluate(comment: str, lang: str) -> str:
-    llama2_model = Llama(model_path="./ggml-model-q4_0.gguf", verbose=False)
+    llama2_model = Llama(model_path="./ggml-model-q4_0.gguf",
+                         verbose=False,
+                         n_ctx=512)
     eng_prompt = 'Please provide a single word to evaluate the following comment. ' + \
         'Use "Positive" for nice comments, "Negative" for mean or rude comments ' + \
             f'or "None" when a comment does not fall on either 2 previous categories: {comment}'
