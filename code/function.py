@@ -1,7 +1,10 @@
+import csv
 from googleapiclient.discovery import build
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+from datetime import datetime
 from llama_cpp import Llama
 import pandas as pd
+import sys
 import os
 
 
@@ -74,7 +77,7 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
         'authorChannelUrl', 'likeCount', 'publishedAt', 'updatedAt'
     ]
     url = url.split('=')[-1]
-    load_dotenv('.env')
+    load_dotenv(find_dotenv())
     api_key = os.getenv('YT_API_KEY')
     if tkn is None:  # First 100 comments batch
         with build('youtube', 'v3', developerKey=api_key) as yt_service:
@@ -115,7 +118,7 @@ def get_comments_data(url: str | None, df: pd.DataFrame | None,
 
 
 def ai_evaluate(comment: str, lang: str) -> str:
-    llama2_model = Llama(model_path="./ggml-model-q4_0.gguf",
+    llama2_model = Llama(model_path='ggml-model-q4_0.gguf',
                          verbose=False,
                          n_ctx=512)
     eng_prompt = 'Please provide a single word to evaluate the following comment. ' + \
@@ -172,12 +175,12 @@ def analyze_comments(url: str, lang: str) -> pd.DataFrame:
     },
               inplace=True)
     df['AI_evaluation'] = df.comment.apply(ai_evaluate, lang=lang)
-    return df
+    csv_name = f'result_{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}_{url.split("=")[-1]}.csv'
+    df.to_csv(csv_name, sep='|', index=False)
+    print(
+        f'Finished analyzing video comments and results are summarized in the file: {csv_name}'
+    )
 
 
-# TODO create videos table, variables of video:
-# id, publishedAt, title, description, duration, viewCount, likeCount, dislikeCount
-
-# test API: https://developers.google.com/youtube/v3/docs
-# API git repo: https://github.com/googleapis/google-api-python-client/blob/main/docs/start.md
-# API docs: https://developers.google.com/resources/api-libraries/documentation/youtube/v3/python/latest/index.html
+if __name__ == '__main__':
+    analyze_comments(url=sys.argv[1], lang=sys.argv[2])
